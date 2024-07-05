@@ -76,6 +76,16 @@ func sendMoney(fromID, toID string, amount float64) error {
 	return nil
 }
 
+func getHistory(id string) ([]Transaction, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	_, exists := wallets[id]
+	if !exists {
+		return nil, errors.New("wallet not found")
+	}
+	return transactions[id], nil
+}
+
 func generateID() string {
 	id := uuid.New()
 	return id.String()

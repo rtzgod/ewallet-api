@@ -42,3 +42,13 @@ func SendMoney(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func GetHistory(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	history, err := getHistory(params["walletId"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(history)
+}
