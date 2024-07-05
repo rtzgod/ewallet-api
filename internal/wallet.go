@@ -22,25 +22,34 @@ type Transaction struct {
 var wallets = make(map[string]*Wallet)
 var transactions = make(map[string][]Transaction)
 var mu sync.Mutex
+var db = Connect()
 
-func createWallet() map[string]*Wallet {
+func createWallet() *Wallet {
 	mu.Lock()
 	defer mu.Unlock()
-
 	id := generateID()
 	wallet := &Wallet{ID: id, Balance: 100.0}
-	wallets[id] = wallet
-	return wallets
+	_, err := db.Exec("insert into Wallets (id, balance) values ($1, 100)", id)
+	if err != nil {
+		panic(err)
+	}
+	return wallet
 }
 
 func getWallet(id string) (*Wallet, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	wallet, exists := wallets[id]
-	if !exists {
-		return nil, errors.New("wallet not found")
+	row, err := db.Query("select * from wallets where id = $1", id)
+	defer row.Close()
+	if err != nil {
+		return nil, err
 	}
-
+	wallet := &Wallet{}
+	row.Next()
+	err = row.Scan(&wallet.ID, &wallet.Balance)
+	if err != nil {
+		return nil, err
+	}
 	return wallet, nil
 }
 
