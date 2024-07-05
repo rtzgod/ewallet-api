@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"sync"
 	"time"
@@ -22,14 +23,25 @@ var wallets = make(map[string]*Wallet)
 var transactions = make(map[string][]Transaction)
 var mu sync.Mutex
 
-func CreateWallet() *Wallet {
+func createWallet() map[string]*Wallet {
 	mu.Lock()
 	defer mu.Unlock()
 
 	id := generateID()
 	wallet := &Wallet{ID: id, Balance: 100.0}
 	wallets[id] = wallet
-	return wallet
+	return wallets
+}
+
+func getWallet(id string) (*Wallet, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	wallet, exists := wallets[id]
+	if !exists {
+		return nil, errors.New("wallet not found")
+	}
+
+	return wallet, nil
 }
 
 func generateID() string {
