@@ -19,40 +19,49 @@ type Transaction struct {
 	Amount float64
 }
 
-var wallets = make(map[string]*Wallet)
-var transactions = make(map[string][]Transaction)
 var mu sync.Mutex
+var db = Connect()
 
-func createWallet() map[string]*Wallet {
+func createWallet() *Wallet {
 	mu.Lock()
 	defer mu.Unlock()
-
 	id := generateID()
 	wallet := &Wallet{ID: id, Balance: 100.0}
-	wallets[id] = wallet
-	return wallets
+	_, err := db.Exec("insert into wallets (id, balance) values ($1, 100)", id)
+	if err != nil {
+		panic(err)
+	}
+	return wallet
 }
 
 func getWallet(id string) (*Wallet, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	wallet, exists := wallets[id]
+	row, err := db.Query("select * from wallets where id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	wallet := &Wallet{}
+	exists := row.Next()
 	if !exists {
 		return nil, errors.New("wallet not found")
 	}
-
+	err = row.Scan(&wallet.ID, &wallet.Balance)
+	if err != nil {
+		return nil, err
+	}
 	return wallet, nil
 }
 
 func sendMoney(fromID, toID string, amount float64) error {
+	senderWallet, senderExists := getWallet(fromID)
+	receiverWallet, receiverExists := getWallet(toID)
 	mu.Lock()
 	defer mu.Unlock()
-	senderWallet, fromExists := wallets[fromID]
-	receiverWallet, toExists := wallets[toID]
-	if !fromExists {
+	if senderExists != nil {
 		return errors.New("sender wallet not found")
 	}
-	if !toExists {
+	if receiverExists != nil {
 		return errors.New("receiver wallet not found")
 	}
 	if senderWallet.Balance < amount {
@@ -61,29 +70,46 @@ func sendMoney(fromID, toID string, amount float64) error {
 	if amount < 0 {
 		return errors.New("amount is negative")
 	}
-	senderWallet.Balance -= amount
-	receiverWallet.Balance += amount
-
+	_, err := db.Exec("update wallets set balance = balance - $1 where id = $2", amount, fromID)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("update wallets set balance = balance + $1 where id = $2", amount, toID)
+	if err != nil {
+		return err
+	}
 	transaction := Transaction{
 		Time:   time.Now(),
 		From:   senderWallet.ID,
 		To:     receiverWallet.ID,
 		Amount: amount,
 	}
-	transactions[fromID] = append(transactions[fromID], transaction)
-	transactions[toID] = append(transactions[toID], transaction)
-
+	_, err = db.Exec("insert into transactions (time, senderid, receiverid, amount) values ($1, $2, $3, $4)", transaction.Time, transaction.From, transaction.To, transaction.Amount)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func getHistory(id string) ([]Transaction, error) {
-	mu.Lock()
-	defer mu.Unlock()
-	_, exists := wallets[id]
-	if !exists {
+	_, err := getWallet(id)
+	if err != nil {
 		return nil, errors.New("wallet not found")
 	}
-	return transactions[id], nil
+	var transactions []Transaction
+	rows, err := db.Query("select * from transactions where senderid = $1 or receiverid = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		t := Transaction{}
+		err = rows.Scan(&t.Time, &t.From, &t.To, &t.Amount)
+		if err != nil {
+			return nil, err
+		}
+		transactions = append(transactions, t)
+	}
+	return transactions, nil
 }
 
 func generateID() string {
