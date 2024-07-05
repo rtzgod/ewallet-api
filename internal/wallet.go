@@ -44,6 +44,38 @@ func getWallet(id string) (*Wallet, error) {
 	return wallet, nil
 }
 
+func sendMoney(fromID, toID string, amount float64) error {
+	mu.Lock()
+	defer mu.Unlock()
+	senderWallet, fromExists := wallets[fromID]
+	receiverWallet, toExists := wallets[toID]
+	if !fromExists {
+		return errors.New("sender wallet not found")
+	}
+	if !toExists {
+		return errors.New("receiver wallet not found")
+	}
+	if senderWallet.Balance < amount {
+		return errors.New("balance not enough")
+	}
+	if amount < 0 {
+		return errors.New("amount is negative")
+	}
+	senderWallet.Balance -= amount
+	receiverWallet.Balance += amount
+
+	transaction := Transaction{
+		Time:   time.Now(),
+		From:   senderWallet.ID,
+		To:     receiverWallet.ID,
+		Amount: amount,
+	}
+	transactions[fromID] = append(transactions[fromID], transaction)
+	transactions[toID] = append(transactions[toID], transaction)
+
+	return nil
+}
+
 func generateID() string {
 	id := uuid.New()
 	return id.String()

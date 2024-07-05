@@ -11,7 +11,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/v1/wallet", inter.CreateWallet).Methods("POST")
-	// r.HandleFunc("/api/v1/wallet/{walletId}/send", SendMoney).Methods("POST")
+	r.HandleFunc("/api/v1/wallet/{walletId}/send", inter.SendMoney).Methods("POST")
 	// r.HandleFunc("/api/v1/wallet/{walletId}/history", GetHistory).Methods("GET")
 	r.HandleFunc("/api/v1/wallet/{walletId}", inter.GetWallet).Methods("GET")
 
