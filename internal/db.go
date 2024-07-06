@@ -22,5 +22,13 @@ func Connect() *sql.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
+	_, err = database.Exec("create table if not exists transactions (time timestamp, senderID varchar(100), receiverID varchar(100), amount numeric)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = database.Exec("create table if not exists wallets (id varchar(100) primary key, balance numeric)")
+	if err != nil {
+		log.Fatal(err)
+	}
 	return database
 }
