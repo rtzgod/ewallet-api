@@ -96,6 +96,8 @@ func getHistory(id string) ([]Transaction, error) {
 	if err != nil {
 		return nil, errors.New("wallet not found")
 	}
+	mu.Lock()
+	defer mu.Unlock()
 	var transactions []Transaction
 	rows, err := db.Query("select * from transactions where senderid = $1 or receiverid = $1", id)
 	if err != nil {
