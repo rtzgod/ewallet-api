@@ -14,10 +14,12 @@ func Connect() *sql.DB {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	userName := os.Getenv("USER_NAME")
-	password := os.Getenv("PASSWORD")
-	dbname := os.Getenv("DATABASE")
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", userName, password, dbname)
+	host := os.Getenv("POSTGRES_HOST")
+	port := os.Getenv("POSTGRES_PORT")
+	userName := os.Getenv("POSTGRES_USER")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	dbname := os.Getenv("POSTGRES_DB")
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, userName, password, dbname)
 	database, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
