@@ -1,5 +1,7 @@
+version: '3.8'
+
 services:
-  app:
+  ewallet-app:
     build: .
     ports:
       - "8080:8080"
@@ -7,14 +9,16 @@ services:
       db:
         condition: service_healthy
   db:
-    container_name: ewallet_db
+    restart: always
     image: postgres:13
+    volumes:
+      - ./.database/postgres/data:/var/lib/pgsql/16/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1
       POSTGRES_DB: ewallet
     ports:
-      - '5432:5432'
+      - '5436:5432'
     healthcheck:
       test: ["CMD-SHELL", 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 10s
