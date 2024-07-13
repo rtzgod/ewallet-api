@@ -1,7 +1,7 @@
 package main
 
 import (
-	inter "EWallet/internal"
+	inter "EWallet/internal/delivery/http"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
