@@ -12,7 +12,7 @@ services:
     restart: always
     image: postgres:13
     volumes:
-      - ./.database/postgres/data:/var/lib/pgsql/16/data
+      - ./database/postgres/data:/var/lib/pgsql/16/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1
