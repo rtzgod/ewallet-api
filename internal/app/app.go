@@ -3,8 +3,8 @@ package app
 import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/rtzgod/EWallet/internal/delivery/httpv1"
-	service2 "github.com/rtzgod/EWallet/internal/domain/service"
+	"github.com/rtzgod/EWallet/internal/delivery/http/v1"
+	"github.com/rtzgod/EWallet/internal/domain/service"
 	"github.com/rtzgod/EWallet/internal/repository/psql"
 	"log"
 	"net/http"
@@ -19,11 +19,16 @@ func Run() {
 	}
 	port := os.Getenv("SERVER_PORT")
 
-	storage := psql.NewStorage()
-	service := service2.NewService(storage)
-	h := httpv1.NewHandler(service)
+	walletStorage, transactionStorage := psql.NewWalletStorage(), psql.NewTransactionStorage()
 
-	h.InitRoutes(r)
+	walletService := service.NewWalletService(walletStorage)
+	transactionService := service.NewTransactionService(transactionStorage, walletService)
+
+	wHandler := v1.NewWalletHandler(walletService)
+	tHandler := v1.NewTransactionHandler(transactionService)
+
+	wHandler.InitRoutes(r)
+	tHandler.InitRoutes(r)
 
 	done := make(chan bool)
 	go http.ListenAndServe(":"+port, r)

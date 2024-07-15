@@ -1,30 +1,44 @@
 package service
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"sync"
 )
 
+type WalletStorage interface {
+	AddWallet(id string) error
+	GetWallets(id string) (*sql.Rows, error)
+}
+
+type walletService struct {
+	storage WalletStorage
+}
+
+func NewWalletService(storage WalletStorage) *walletService {
+	return &walletService{storage: storage}
+}
+
 var mu sync.Mutex
 
-func (s *Service) CreateWallet() *entity.Wallet {
+func (w *walletService) CreateWallet() *entity.Wallet {
 	mu.Lock()
 	defer mu.Unlock()
 	id := generateID()
 	wallet := &entity.Wallet{ID: id, Balance: 100.0}
-	err := s.storage.AddWallet(id)
+	err := w.storage.AddWallet(id)
 	if err != nil {
 		panic(err)
 	}
 	return wallet
 }
 
-func (s *Service) GetWallet(id string) (*entity.Wallet, error) {
+func (w *walletService) GetWallet(id string) (*entity.Wallet, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	row, err := s.storage.GetWallets(id)
+	row, err := w.storage.GetWallets(id)
 	if err != nil {
 		return nil, err
 	}
