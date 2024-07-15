@@ -19,14 +19,11 @@ func Run() {
 	}
 	port := os.Getenv("SERVER_PORT")
 
-	repo := psql.NewRepository()
-	service := service2.NewService(repo)
+	storage := psql.NewStorage()
+	service := service2.NewService(storage)
 	h := httpv1.NewHandler(service)
 
-	r.HandleFunc("/api/v1/wallet", h.CreateWallet).Methods("POST")
-	r.HandleFunc("/api/v1/wallet/{walletId}/send", h.SendMoney).Methods("POST")
-	r.HandleFunc("/api/v1/wallet/{walletId}/history", h.GetHistory).Methods("GET")
-	r.HandleFunc("/api/v1/wallet/{walletId}", h.GetWallet).Methods("GET")
+	h.InitRoutes(r)
 
 	done := make(chan bool)
 	go http.ListenAndServe(":"+port, r)

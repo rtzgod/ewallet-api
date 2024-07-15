@@ -23,11 +23,11 @@ func (s *Service) SendMoney(fromID, toID string, amount float64) error {
 	if amount < 0 {
 		return errors.New("amount is negative")
 	}
-	err := s.repo.UpdateBalance(fromID, amount)
+	err := s.storage.UpdateBalance(fromID, amount)
 	if err != nil {
 		return err
 	}
-	err = s.repo.UpdateBalance(toID, amount)
+	err = s.storage.UpdateBalance(toID, amount)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (s *Service) SendMoney(fromID, toID string, amount float64) error {
 		To:     receiverWallet.ID,
 		Amount: amount,
 	}
-	err = s.repo.AddTransaction(transaction)
+	err = s.storage.AddTransaction(transaction)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (s *Service) GetHistory(id string) ([]entity.Transaction, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	var transactions []entity.Transaction
-	rows, err := s.repo.GetTransactions(id)
+	rows, err := s.storage.GetTransactions(id)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,7 @@ import (
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 )
 
-type Repository interface {
+type Storage interface {
 	AddWallet(id string) error
 	GetWallets(id string) (*sql.Rows, error)
 	UpdateBalance(id string, amount float64) error
@@ -14,9 +14,9 @@ type Repository interface {
 }
 
 type Service struct {
-	repo Repository
+	storage Storage
 }
 
-func NewService(repo Repository) *Service {
-	return &Service{repo: repo}
+func NewService(storage Storage) *Service {
+	return &Service{storage: storage}
 }

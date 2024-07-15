@@ -14,7 +14,7 @@ func (s *Service) CreateWallet() *entity.Wallet {
 	defer mu.Unlock()
 	id := generateID()
 	wallet := &entity.Wallet{ID: id, Balance: 100.0}
-	err := s.repo.AddWallet(id)
+	err := s.storage.AddWallet(id)
 	if err != nil {
 		panic(err)
 	}
@@ -24,7 +24,7 @@ func (s *Service) CreateWallet() *entity.Wallet {
 func (s *Service) GetWallet(id string) (*entity.Wallet, error) {
 	mu.Lock()
 	defer mu.Unlock()
-	row, err := s.repo.GetWallets(id)
+	row, err := s.storage.GetWallets(id)
 	if err != nil {
 		return nil, err
 	}

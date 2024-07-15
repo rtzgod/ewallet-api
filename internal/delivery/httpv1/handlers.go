@@ -6,6 +6,13 @@ import (
 	"net/http"
 )
 
+func (h *Handler) InitRoutes(r *mux.Router) {
+	r.HandleFunc("/api/v1/wallet", h.CreateWallet).Methods("POST")
+	r.HandleFunc("/api/v1/wallet/{walletId}/send", h.SendMoney).Methods("POST")
+	r.HandleFunc("/api/v1/wallet/{walletId}/history", h.GetHistory).Methods("GET")
+	r.HandleFunc("/api/v1/wallet/{walletId}", h.GetWallet).Methods("GET")
+}
+
 func (h *Handler) CreateWallet(w http.ResponseWriter, r *http.Request) {
 	wallets := h.service.CreateWallet()
 	_ = json.NewEncoder(w).Encode(wallets)
