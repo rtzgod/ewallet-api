@@ -5,22 +5,21 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type walletStorage struct {
+type WalletStorage struct {
 	db *sql.DB
 }
 
-func NewWalletStorage() *walletStorage {
-	db := Connect()
-	return &walletStorage{db: db}
+func NewWalletStorage(db *sql.DB) *WalletStorage {
+	return &WalletStorage{db: db}
 }
 
-func (s *walletStorage) AddWallet(id string) error {
+func (s *WalletStorage) AddWallet(id string) error {
 	_, err := s.db.Exec("insert into wallets (id, balance) values ($1, 100)", id)
 
 	return err
 }
 
-func (s *walletStorage) GetWallets(id string) (*sql.Rows, error) {
+func (s *WalletStorage) GetWallets(id string) (*sql.Rows, error) {
 	rows, err := s.db.Query("select * from wallets where id = $1", id)
 
 	return rows, err

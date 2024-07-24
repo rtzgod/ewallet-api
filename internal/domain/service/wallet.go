@@ -13,17 +13,17 @@ type WalletStorage interface {
 	GetWallets(id string) (*sql.Rows, error)
 }
 
-type walletService struct {
+type WalletService struct {
 	storage WalletStorage
 }
 
-func NewWalletService(storage WalletStorage) *walletService {
-	return &walletService{storage: storage}
+func NewWalletService(storage WalletStorage) *WalletService {
+	return &WalletService{storage: storage}
 }
 
 var mu sync.Mutex
 
-func (w *walletService) CreateWallet() *entity.Wallet {
+func (w *WalletService) CreateWallet() *entity.Wallet {
 	mu.Lock()
 	defer mu.Unlock()
 	id := generateID()
@@ -35,7 +35,7 @@ func (w *walletService) CreateWallet() *entity.Wallet {
 	return wallet
 }
 
-func (w *walletService) GetWallet(id string) (*entity.Wallet, error) {
+func (w *WalletService) GetWallet(id string) (*entity.Wallet, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	row, err := w.storage.GetWallets(id)

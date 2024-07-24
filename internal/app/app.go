@@ -3,8 +3,9 @@ package app
 import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/rtzgod/EWallet/internal/delivery/http/v1"
+	htp "github.com/rtzgod/EWallet/internal/delivery/http"
 	"github.com/rtzgod/EWallet/internal/domain/service"
+	"github.com/rtzgod/EWallet/internal/repository"
 	"github.com/rtzgod/EWallet/internal/repository/psql"
 	"log"
 	"net/http"
@@ -18,17 +19,15 @@ func Run() {
 		log.Fatal("Error loading .env file")
 	}
 	port := os.Getenv("SERVER_PORT")
+	db := psql.Connect()
 
-	walletStorage, transactionStorage := psql.NewWalletStorage(), psql.NewTransactionStorage()
+	storage := repository.NewStorage(db)
 
-	walletService := service.NewWalletService(walletStorage)
-	transactionService := service.NewTransactionService(transactionStorage, walletService)
+	services := service.NewService(storage)
 
-	wHandler := v1.NewWalletHandler(walletService)
-	tHandler := v1.NewTransactionHandler(transactionService)
+	handler := htp.NewHandler(services)
 
-	wHandler.InitRoutes(r)
-	tHandler.InitRoutes(r)
+	handler.InitRoutes(r)
 
 	done := make(chan bool)
 	go http.ListenAndServe(":"+port, r)

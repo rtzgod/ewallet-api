@@ -17,16 +17,16 @@ type WalletProvider interface {
 	GetWallet(id string) (*entity.Wallet, error)
 }
 
-type transactionService struct {
+type TransactionService struct {
 	storage        TransactionStorage
 	walletProvider WalletProvider
 }
 
-func NewTransactionService(storage TransactionStorage, walletProvider WalletProvider) *transactionService {
-	return &transactionService{storage: storage, walletProvider: walletProvider}
+func NewTransactionService(storage TransactionStorage, walletProvider WalletProvider) *TransactionService {
+	return &TransactionService{storage: storage, walletProvider: walletProvider}
 }
 
-func (t *transactionService) SendMoney(fromID, toID string, amount float64) error {
+func (t *TransactionService) SendMoney(fromID, toID string, amount float64) error {
 	senderWallet, senderExists := t.walletProvider.GetWallet(fromID)
 	receiverWallet, receiverExists := t.walletProvider.GetWallet(toID)
 	mu.Lock()
@@ -64,7 +64,7 @@ func (t *transactionService) SendMoney(fromID, toID string, amount float64) erro
 	return nil
 }
 
-func (t *transactionService) GetHistory(id string) ([]entity.Transaction, error) {
+func (t *TransactionService) GetHistory(id string) ([]entity.Transaction, error) {
 	_, err := t.walletProvider.GetWallet(id)
 	if err != nil {
 		return nil, errors.New("wallet not found")
