@@ -1,8 +1,12 @@
 package service
 
-import "github.com/rtzgod/EWallet/internal/repository"
+import (
+	"github.com/rtzgod/EWallet/internal/domain/entity"
+	"github.com/rtzgod/EWallet/internal/repository"
+)
 
 type Wallet interface {
+	Create() (entity.Wallet, error)
 }
 
 type Transaction interface {

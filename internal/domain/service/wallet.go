@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/google/uuid"
+	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/repository"
 )
 
@@ -13,9 +14,13 @@ func NewWalletService(repo repository.Wallet) *WalletService {
 	return &WalletService{repo: repo}
 }
 
-func (s *WalletService) Create() {
+func (s *WalletService) Create() (entity.Wallet, error) {
 	id := generateId()
-	s.repo.Create(id)
+	wallet, err := s.repo.Create(id)
+	if err != nil {
+		return entity.Wallet{}, err
+	}
+	return wallet, nil
 }
 
 func generateId() string {
