@@ -1,6 +1,6 @@
 package entity
 
 type Wallet struct {
-	ID      string
-	Balance float64
+	Id     string
+	Amount float64
 }
