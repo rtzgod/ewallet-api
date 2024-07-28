@@ -7,6 +7,7 @@ import (
 
 type Wallet interface {
 	Create() (entity.Wallet, error)
+	GetById(id string) (entity.Wallet, error)
 }
 
 type Transaction interface {

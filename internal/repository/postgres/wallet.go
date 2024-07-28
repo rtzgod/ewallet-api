@@ -34,3 +34,13 @@ func (r *WalletPostgres) Create(id string) (entity.Wallet, error) {
 
 	return wallet, nil
 }
+
+func (r *WalletPostgres) GetById(id string) (entity.Wallet, error) {
+	var wallet entity.Wallet
+	query := fmt.Sprintf("select * from %s where id=$1", walletsTable)
+	err := r.db.Get(&wallet, query, id)
+	if err != nil {
+		return wallet, errors.New("failed to select wallet: " + err.Error())
+	}
+	return wallet, nil
+}

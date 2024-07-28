@@ -23,6 +23,14 @@ func (s *WalletService) Create() (entity.Wallet, error) {
 	return wallet, nil
 }
 
+func (s *WalletService) GetById(id string) (entity.Wallet, error) {
+	wallet, err := s.repo.GetById(id)
+	if err != nil {
+		return entity.Wallet{}, err
+	}
+	return wallet, nil
+}
+
 func generateId() string {
 	id := uuid.New()
 	return id.String()
