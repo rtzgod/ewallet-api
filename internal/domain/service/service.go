@@ -13,6 +13,7 @@ type Wallet interface {
 
 type Transaction interface {
 	Create(senderId, receiverId string, amount float64) error
+	GetAllById(id string) ([]entity.Transaction, error)
 }
 
 type Service struct {

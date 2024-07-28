@@ -47,5 +47,15 @@ func (h *Handler) sendMoney(c *gin.Context) {
 }
 
 func (h *Handler) getHistory(c *gin.Context) {
-
+	id := c.Param("walletId")
+	if _, err := h.services.Wallet.GetById(id); err != nil {
+		handlers.NewErrorResponse(c, http.StatusNotFound, "wallet not found")
+		return
+	}
+	transactions, err := h.services.Transaction.GetAllById(id)
+	if err != nil {
+		handlers.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, transactions)
 }

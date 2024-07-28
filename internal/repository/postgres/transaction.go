@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"time"
 )
 
@@ -18,8 +19,15 @@ func NewTransactionPostgres(db *sqlx.DB) *TransactionPostgres {
 func (r *TransactionPostgres) Create(senderId, receiverId string, amount float64) error {
 	query := fmt.Sprintf("insert into %s (time, sender_id, receiver_id, amount) values ($1, $2, $3, $4)", transactionsTable)
 	_, err := r.db.Exec(query, time.Now(), senderId, receiverId, amount)
+	return err
+}
+
+func (r *TransactionPostgres) GetAllById(id string) ([]entity.Transaction, error) {
+	var transactions []entity.Transaction
+	query := fmt.Sprintf("select * from %s where sender_id = $1 or receiver_id = $2", transactionsTable)
+	err := r.db.Select(&transactions, query, id, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return transactions, nil
 }
