@@ -9,6 +9,11 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+type WalletResponse struct {
+	Id      string  `json:"id"`
+	Balance float64 `json:"balance"`
+}
+
 type StatusResponse struct {
 	Status string `json:"status"`
 }

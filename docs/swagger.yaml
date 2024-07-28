@@ -1,0 +1,98 @@
+basePath: /
+definitions:
+  handlers.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.WalletResponse:
+    properties:
+      balance:
+        type: number
+      id:
+        type: string
+    type: object
+  http.receiverWalletForm:
+    properties:
+      amount:
+        type: number
+      to:
+        type: string
+    required:
+    - amount
+    - to
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API Server for Ewallet App
+  title: Ewallet App API
+  version: "2.0"
+paths:
+  /api/v1/wallet/:
+    post:
+      description: Creates wallet and returns id and balance of wallet
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.WalletResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: CreateWallet
+      tags:
+      - Wallet
+  /api/v1/wallet/{walletId}:
+    get:
+      description: Returns wallet by id
+      parameters:
+      - description: WalletId
+        in: path
+        name: walletId
+        required: true
+        type: string
+      responses: {}
+      summary: GetWallet
+      tags:
+      - Wallet
+  /api/v1/wallet/{walletId}/history:
+    get:
+      description: returns history of transactions of wallet by id
+      parameters:
+      - description: WalletId
+        in: path
+        name: walletId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: GetHistory
+      tags:
+      - Transaction
+  /api/v1/wallet/{walletId}/send:
+    post:
+      consumes:
+      - application/json
+      description: Sends money from one wallet to another
+      parameters:
+      - description: WalletId
+        in: path
+        name: walletId
+        required: true
+        type: string
+      - description: Transaction
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/http.receiverWalletForm'
+      produces:
+      - application/json
+      responses: {}
+      summary: SendMoney
+      tags:
+      - Transaction
+swagger: "2.0"

@@ -3,6 +3,11 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/rtzgod/EWallet/internal/domain/service"
+
+	"github.com/swaggo/files"       // swagger embed files
+	"github.com/swaggo/gin-swagger" // gin-swagger middleware
+
+	_ "github.com/rtzgod/EWallet/docs"
 )
 
 type Handler struct {
@@ -22,5 +27,6 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		wallet.POST("/:walletId/send", h.sendMoney)
 		wallet.GET("/:walletId/history", h.getHistory)
 	}
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r
 }
