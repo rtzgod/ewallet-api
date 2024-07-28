@@ -2,13 +2,25 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/handlers"
 	"net/http"
 )
 
+type receiverWalletForm struct {
+	ReceiverId string  `json:"to"  binding:"required"`
+	Amount     float64 `json:"amount" binding:"required"`
+}
+
+// @Summary SendMoney
+// @Tags Transaction
+// @Description Sends money from one wallet to another
+// @Accept json
+// @Produce json
+// @Param walletId path string true "WalletId"
+// @Param transaction body receiverWalletForm true "Transaction"
+// @Router /api/v1/wallet/{walletId}/send [post]
 func (h *Handler) sendMoney(c *gin.Context) {
-	var input entity.Transaction
+	var input receiverWalletForm
 	senderId := c.Param("walletId")
 	if err := c.BindJSON(&input); err != nil {
 		handlers.NewErrorResponse(c, http.StatusBadRequest, "json body incorrect")
@@ -46,6 +58,12 @@ func (h *Handler) sendMoney(c *gin.Context) {
 	})
 }
 
+// @Summary GetHistory
+// @Tags Transaction
+// @Description returns history of transactions of wallet by id
+// @Produce json
+// @Param walletId path string true "WalletId"
+// @Router /api/v1/wallet/{walletId}/history [get]
 func (h *Handler) getHistory(c *gin.Context) {
 	id := c.Param("walletId")
 	if _, err := h.services.Wallet.GetById(id); err != nil {
