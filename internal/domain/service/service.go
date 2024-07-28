@@ -8,9 +8,11 @@ import (
 type Wallet interface {
 	Create() (entity.Wallet, error)
 	GetById(id string) (entity.Wallet, error)
+	Update(senderId, receiverId string, amount float64) error
 }
 
 type Transaction interface {
+	Create(senderId, receiverId string, amount float64) error
 }
 
 type Service struct {
@@ -20,6 +22,7 @@ type Service struct {
 
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
-		Wallet: NewWalletService(repos.Wallet),
+		Wallet:      NewWalletService(repos.Wallet),
+		Transaction: NewTransactionService(repos.Transaction),
 	}
 }

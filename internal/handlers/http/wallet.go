@@ -2,30 +2,31 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rtzgod/EWallet/internal/handlers"
 	"net/http"
 )
 
 func (h *Handler) createWallet(c *gin.Context) {
-	wallet, err := h.services.Create()
+	wallet, err := h.services.Wallet.Create()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		handlers.NewErrorResponse(c, http.StatusInternalServerError, "unable to create wallet")
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"Id":     wallet.Id,
-		"Amount": wallet.Amount,
+		"Amount": wallet.Balance,
 	})
 }
 
 func (h *Handler) getWalletById(c *gin.Context) {
 	id := c.Param("walletId")
-	wallet, err := h.services.GetById(id)
+	wallet, err := h.services.Wallet.GetById(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"wallet not found, error:": err.Error()})
+		handlers.NewErrorResponse(c, http.StatusNotFound, "unable to get wallet")
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"Id":      wallet.Id,
-		"Balance": wallet.Amount,
+		"Balance": wallet.Balance,
 	})
 }

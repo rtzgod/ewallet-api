@@ -16,19 +16,15 @@ func NewWalletService(repo repository.Wallet) *WalletService {
 
 func (s *WalletService) Create() (entity.Wallet, error) {
 	id := generateId()
-	wallet, err := s.repo.Create(id)
-	if err != nil {
-		return entity.Wallet{}, err
-	}
-	return wallet, nil
+	return s.repo.Create(id)
 }
 
 func (s *WalletService) GetById(id string) (entity.Wallet, error) {
-	wallet, err := s.repo.GetById(id)
-	if err != nil {
-		return entity.Wallet{}, err
-	}
-	return wallet, nil
+	return s.repo.GetById(id)
+}
+
+func (s *WalletService) Update(senderId, receiverId string, amount float64) error {
+	return s.repo.Update(senderId, receiverId, amount)
 }
 
 func generateId() string {

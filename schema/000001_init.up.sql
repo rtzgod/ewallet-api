@@ -1,6 +1,6 @@
 create table wallets (
     id varchar(255) primary key,
-    amount numeric not null
+    balance numeric not null
 );
 
 create table transactions (
