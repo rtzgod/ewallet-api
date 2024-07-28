@@ -1,36 +1,53 @@
 package app
 
 import (
-	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	htp "github.com/rtzgod/EWallet/internal/delivery/http"
 	"github.com/rtzgod/EWallet/internal/domain/service"
+	handlerHttp "github.com/rtzgod/EWallet/internal/handlers/http"
 	"github.com/rtzgod/EWallet/internal/repository"
-	"github.com/rtzgod/EWallet/internal/repository/psql"
-	"log"
-	"net/http"
+	"github.com/rtzgod/EWallet/internal/repository/postgres"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"os"
 )
 
 func Run() {
-	r := mux.NewRouter()
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	if err := initConfig(); err != nil {
+		logrus.Fatalf("Error initializing config file: %s", err)
 	}
-	port := os.Getenv("SERVER_PORT")
-	db := psql.Connect()
+	if err := godotenv.Load(".env"); err != nil {
+		logrus.Fatalf("Error loading .env file: %s", err)
+	}
 
-	storage := repository.NewStorage(db)
+	db, err := postgres.NewPostgres(postgres.Config{
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
+		User:     viper.GetString("db.user"),
+		Password: os.Getenv("POSTGRES_PASSWORD"),
+		DBName:   viper.GetString("db.name"),
+		SSLMode:  viper.GetString("db.sslmode"),
+	})
 
-	services := service.NewService(storage)
+	if err != nil {
+		logrus.Fatalf("Error initializing DB connection: %s", err)
+	}
 
-	handler := htp.NewHandler(services)
+	repos := repository.NewRepository(db)
 
-	handler.InitRoutes(r)
+	services := service.NewService(repos)
 
-	done := make(chan bool)
-	go http.ListenAndServe(":"+port, r)
-	log.Println("Server started on port: " + port)
-	<-done
+	handlers := handlerHttp.NewHandler(services)
+
+	server := new(Server)
+
+	if err := server.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+		logrus.Fatalf("Error occured while running server: %s", err)
+	}
+}
+
+func initConfig() error {
+	viper.AddConfigPath("configs")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
 }

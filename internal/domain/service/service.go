@@ -1,28 +1,29 @@
 package service
 
-import "github.com/rtzgod/EWallet/internal/repository/psql"
+import (
+	"github.com/rtzgod/EWallet/internal/domain/entity"
+	"github.com/rtzgod/EWallet/internal/repository"
+)
 
-type Storage interface {
-	GetWalletStorage() *psql.WalletStorage
-	GetTransactionStorage() *psql.TransactionStorage
+type Wallet interface {
+	Create() (entity.Wallet, error)
+	GetById(id string) (entity.Wallet, error)
+	Update(senderId, receiverId string, amount float64) error
+}
+
+type Transaction interface {
+	Create(senderId, receiverId string, amount float64) error
+	GetAllById(id string) ([]entity.Transaction, error)
 }
 
 type Service struct {
-	WalletService      *WalletService
-	TransactionService *TransactionService
+	Wallet
+	Transaction
 }
 
-func NewService(storage Storage) *Service {
+func NewService(repos *repository.Repository) *Service {
 	return &Service{
-		WalletService:      NewWalletService(storage.GetWalletStorage()),
-		TransactionService: NewTransactionService(storage.GetTransactionStorage(), NewWalletService(storage.GetWalletStorage())),
+		Wallet:      NewWalletService(repos.Wallet),
+		Transaction: NewTransactionService(repos.Transaction),
 	}
-}
-
-func (s *Service) GetWalletService() *WalletService {
-	return s.WalletService
-}
-
-func (s *Service) GetTransactionService() *TransactionService {
-	return s.TransactionService
 }
