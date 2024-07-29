@@ -5,6 +5,8 @@ import (
 	"github.com/rtzgod/EWallet/internal/repository"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type Wallet interface {
 	Create() (entity.Wallet, error)
 	GetById(id string) (entity.Wallet, error)
