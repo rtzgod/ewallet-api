@@ -33,7 +33,7 @@ func (h *Handler) getWalletById(c *gin.Context) {
 	id := c.Param("walletId")
 	wallet, err := h.services.Wallet.GetById(id)
 	if err != nil {
-		handlers.NewErrorResponse(c, http.StatusNotFound, "unable to get wallet")
+		handlers.NewErrorResponse(c, http.StatusNotFound, "wallet not found")
 		return
 	}
 	c.JSON(http.StatusOK, handlers.WalletResponse{
