@@ -51,17 +51,17 @@ func TestHandler_createWallet(t *testing.T) {
 	r := gin.Default()
 	r.POST("/api/v1/wallet/", handler.createWallet)
 
-	for _, tt := range testTable {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(mockWalletService)
+	for _, tc := range testTable {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.mockBehavior(mockWalletService)
 
 			req, _ := http.NewRequest("POST", "/api/v1/wallet/", nil)
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
 
-			assert.Equal(t, tt.expectedStatusCode, w.Code)
-			assert.Equal(t, tt.expectedRequestBody, w.Body.String())
+			assert.Equal(t, tc.expectedStatusCode, w.Code)
+			assert.Equal(t, tc.expectedRequestBody, w.Body.String())
 		})
 	}
 }
@@ -106,17 +106,17 @@ func TestHandler_getWalletById(t *testing.T) {
 	r := gin.Default()
 	r.GET("/api/v1/wallet/:walletId", handler.getWalletById)
 
-	for _, tt := range testTable {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(mockWalletService, tt.walletId)
+	for _, tc := range testTable {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.mockBehavior(mockWalletService, tc.walletId)
 
-			req, _ := http.NewRequest("GET", "/api/v1/wallet/"+tt.walletId, nil)
+			req, _ := http.NewRequest("GET", "/api/v1/wallet/"+tc.walletId, nil)
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
 
-			assert.Equal(t, tt.expectedStatusCode, w.Code)
-			assert.Equal(t, tt.expectedRequestBody, w.Body.String())
+			assert.Equal(t, tc.expectedStatusCode, w.Code)
+			assert.Equal(t, tc.expectedRequestBody, w.Body.String())
 		})
 	}
 }

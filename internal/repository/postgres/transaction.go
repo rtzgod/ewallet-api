@@ -18,7 +18,7 @@ func NewTransactionPostgres(db *sqlx.DB) *TransactionPostgres {
 
 func (r *TransactionPostgres) Create(senderId, receiverId string, amount float64) error {
 	query := fmt.Sprintf("insert into %s (time, sender_id, receiver_id, amount) values ($1, $2, $3, $4)", transactionsTable)
-	_, err := r.db.Exec(query, time.Now(), senderId, receiverId, amount)
+	_, err := r.db.Exec(query, time.Now().Format(time.RFC3339), senderId, receiverId, amount)
 	return err
 }
 
