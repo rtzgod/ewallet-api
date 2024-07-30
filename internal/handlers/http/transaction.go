@@ -20,13 +20,17 @@ type receiverWalletForm struct {
 // @Param transaction body receiverWalletForm true "Transaction"
 // @Router /api/v1/wallet/{walletId}/send [post]
 func (h *Handler) sendMoney(c *gin.Context) {
+
 	var input receiverWalletForm
 	senderId := c.Param("walletId")
 	if err := c.BindJSON(&input); err != nil {
 		handlers.NewErrorResponse(c, http.StatusBadRequest, "json body incorrect")
 		return
 	}
-
+	if input.Amount < 10 {
+		handlers.NewErrorResponse(c, http.StatusBadRequest, "minimal amount is 10")
+		return
+	}
 	if senderId == input.ReceiverId {
 		handlers.NewErrorResponse(c, http.StatusBadRequest, "self transaction")
 		return
@@ -34,23 +38,23 @@ func (h *Handler) sendMoney(c *gin.Context) {
 
 	senderWallet, err := h.services.Wallet.GetById(senderId)
 	if err != nil {
-		handlers.NewErrorResponse(c, http.StatusNotFound, "sender Wallet not found")
-		return
-	}
-	if _, err := h.services.Wallet.GetById(input.ReceiverId); err != nil {
-		handlers.NewErrorResponse(c, http.StatusBadRequest, "receiver Wallet not found")
+		handlers.NewErrorResponse(c, http.StatusNotFound, "sender wallet not found")
 		return
 	}
 	if senderWallet.Balance < input.Amount {
 		handlers.NewErrorResponse(c, http.StatusBadRequest, "sender wallet balance not enough")
 		return
 	}
+	if _, err := h.services.Wallet.GetById(input.ReceiverId); err != nil {
+		handlers.NewErrorResponse(c, http.StatusBadRequest, "receiver wallet not found")
+		return
+	}
 	if err := h.services.Update(senderId, input.ReceiverId, input.Amount); err != nil {
-		handlers.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		handlers.NewErrorResponse(c, http.StatusInternalServerError, "unable to update wallets")
 		return
 	}
 	if err := h.services.Transaction.Create(senderId, input.ReceiverId, input.Amount); err != nil {
-		handlers.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		handlers.NewErrorResponse(c, http.StatusInternalServerError, "unable to add transaction")
 		return
 	}
 	c.JSON(http.StatusOK, handlers.StatusResponse{
@@ -72,7 +76,7 @@ func (h *Handler) getHistory(c *gin.Context) {
 	}
 	transactions, err := h.services.Transaction.GetAllById(id)
 	if err != nil {
-		handlers.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		handlers.NewErrorResponse(c, http.StatusInternalServerError, "unable to get history of transactions")
 		return
 	}
 	c.JSON(http.StatusOK, transactions)
