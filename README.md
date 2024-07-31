@@ -44,7 +44,7 @@ Make sure you have the following software installed:
 3. Configure configs/config.yml file according to your PostgresSQL settings
 
 ### Usage
-Visit [this site](http://localhost:8080/swagger/index.html) to perform API interaction
+Visit [this site](http://localhost:8080/swagger/index.html) to perform API interaction(before that run the app)
 
 ### License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
