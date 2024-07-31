@@ -1,28 +1,27 @@
 version: '3.8'
 
 services:
-  ewallet-app:
+  app:
     build: .
     ports:
       - "8080:8080"
+    restart: on-failure
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+
   db:
     restart: always
-    image: postgres:13
-    volumes:
-      - ./database/postgres/data:/var/lib/pgsql/16/data
+    image: postgres:latest
+    container_name: db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1
-      POSTGRES_DB: ewallet
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
     ports:
       - '5436:5432'
-    healthcheck:
-      test: ["CMD-SHELL", 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 10s
-      timeout: 3s
-      retries: 3
 
-
+volumes:
+  db_data:
