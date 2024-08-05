@@ -1,4 +1,4 @@
-package http
+package unit
 
 import (
 	"errors"
@@ -6,7 +6,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/domain/service"
-	mock_service "github.com/rtzgod/EWallet/internal/domain/service/mocks"
+	handlers_http "github.com/rtzgod/EWallet/internal/handlers/http"
+	"github.com/rtzgod/EWallet/tests/unit/mocks"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -46,10 +47,10 @@ func TestHandler_createWallet(t *testing.T) {
 	mockWalletService := mock_service.NewMockWallet(ctrl)
 
 	services := &service.Service{Wallet: mockWalletService}
-	handler := NewHandler(services)
+	handler := handlers_http.NewHandler(services)
 
 	r := gin.Default()
-	r.POST("/api/v1/wallet/", handler.createWallet)
+	r.POST("/api/v1/wallet/", handler.CreateWallet)
 
 	for _, tc := range testTable {
 		t.Run(tc.name, func(t *testing.T) {
@@ -101,10 +102,10 @@ func TestHandler_getWalletById(t *testing.T) {
 
 	mockWalletService := mock_service.NewMockWallet(ctrl)
 	services := &service.Service{Wallet: mockWalletService}
-	handler := NewHandler(services)
+	handler := handlers_http.NewHandler(services)
 
 	r := gin.Default()
-	r.GET("/api/v1/wallet/:walletId", handler.getWalletById)
+	r.GET("/api/v1/wallet/:walletId", handler.GetWalletById)
 
 	for _, tc := range testTable {
 		t.Run(tc.name, func(t *testing.T) {

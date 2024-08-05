@@ -6,22 +6,22 @@ import (
 	"net/http"
 )
 
-type receiverWalletForm struct {
+type ReceiverWalletForm struct {
 	ReceiverId string  `json:"to"  binding:"required"`
 	Amount     float64 `json:"amount" binding:"required"`
 }
 
-// @Summary SendMoney
+// @Summary Send Money
 // @Tags Transaction
 // @Description Sends money from one wallet to another
 // @Accept json
 // @Produce json
 // @Param walletId path string true "WalletId"
-// @Param transaction body receiverWalletForm true "Transaction"
+// @Param transaction body ReceiverWalletForm true "Transaction"
 // @Router /api/v1/wallet/{walletId}/send [post]
-func (h *Handler) sendMoney(c *gin.Context) {
+func (h *Handler) SendMoney(c *gin.Context) {
 
-	var input receiverWalletForm
+	var input ReceiverWalletForm
 	senderId := c.Param("walletId")
 	if err := c.BindJSON(&input); err != nil {
 		handlers.NewErrorResponse(c, http.StatusBadRequest, "json body incorrect")
@@ -62,13 +62,13 @@ func (h *Handler) sendMoney(c *gin.Context) {
 	})
 }
 
-// @Summary GetHistory
+// @Summary Get History
 // @Tags Transaction
 // @Description returns history of transactions of wallet by id
 // @Produce json
 // @Param walletId path string true "WalletId"
 // @Router /api/v1/wallet/{walletId}/history [get]
-func (h *Handler) getHistory(c *gin.Context) {
+func (h *Handler) GetHistory(c *gin.Context) {
 	id := c.Param("walletId")
 	if _, err := h.services.Wallet.GetById(id); err != nil {
 		handlers.NewErrorResponse(c, http.StatusNotFound, "wallet not found")

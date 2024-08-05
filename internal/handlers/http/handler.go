@@ -22,10 +22,10 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	r := gin.New()
 	wallet := r.Group("/api/v1/wallet")
 	{
-		wallet.POST("/", h.createWallet)
-		wallet.GET("/:walletId", h.getWalletById)
-		wallet.POST("/:walletId/send", h.sendMoney)
-		wallet.GET("/:walletId/history", h.getHistory)
+		wallet.POST("/", h.CreateWallet)
+		wallet.GET("/:walletId", h.GetWalletById)
+		wallet.POST("/:walletId/send", h.SendMoney)
+		wallet.GET("/:walletId/history", h.GetHistory)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r
