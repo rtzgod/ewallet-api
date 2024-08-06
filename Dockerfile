@@ -26,6 +26,10 @@ RUN mkdir -p /root/configs
 COPY configs/config.yml /root/configs/
 COPY .env .
 
+# Migrations
+
+RUN mkdir -p /root/db/migrations
+COPY db/migrations /root/db/migrations/
 
 EXPOSE 8080
 
