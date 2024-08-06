@@ -3,12 +3,17 @@ package integration
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/ory/dockertest/v3"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/repository"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"log"
 	"testing"
 )
+
+var DB *sqlx.DB
 
 type MyNewIntegrationSuite struct {
 	suite.Suite
@@ -16,27 +21,63 @@ type MyNewIntegrationSuite struct {
 	repos *repository.Repository
 }
 
+func TestMain(m *testing.M) {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		logrus.Fatalf("Could not construct pool: %s", err)
+	}
+	err = pool.Client.Ping()
+	if err != nil {
+		log.Fatalf("[1] Could not connect to docker: %s", err)
+	}
+	resource, err := pool.BuildAndRun("integration_tests_db", "fixtures/Dockerfile", []string{})
+	if err != nil {
+		log.Fatalf("Could not start resource: %s", err)
+	}
+
+	hostAndPort := resource.GetHostPort("5432/tcp")
+	databaseUrl := fmt.Sprintf("postgres://testuser:123@%s/testdb?sslmode=disable", hostAndPort)
+
+	if err = pool.Retry(func() error {
+		var err error
+		DB, err = sqlx.Open("postgres", databaseUrl)
+		if err != nil {
+			return err
+		}
+		return DB.Ping()
+	}); err != nil {
+		log.Fatalf("[2] Could not connect to docker: %s", err)
+	}
+
+	defer func() {
+		if err := pool.Purge(resource); err != nil {
+			log.Fatalf("Could not purge resource: %s", err)
+		}
+	}()
+
+	m.Run()
+}
+
 func TestMyNewIntegrationSuite(t *testing.T) {
 	suite.Run(t, new(MyNewIntegrationSuite))
 }
 
 func (s *MyNewIntegrationSuite) SetupSuite() {
-
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		"localhost", "5432", "postgres", "1", "postgres", "disable")
-	db, err := sqlx.Connect("postgres", connStr)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	s.db = db
+	s.db = DB
 }
 
-func (s *MyNewIntegrationSuite) TearDownTest() {
-	_, _ = s.db.Exec("TRUNCATE TABLE wallets, transactions")
+func (s *MyNewIntegrationSuite) TearDownSuite() {
+	if err := s.db.Close(); err != nil {
+		logrus.Fatal(err)
+	}
 }
 
 func (s *MyNewIntegrationSuite) SetupTest() {
 	s.repos = repository.NewRepository(s.db)
+}
+
+func (s *MyNewIntegrationSuite) TearDownTest() {
+	_, _ = s.db.Exec("TRUNCATE TABLE wallets, transactions")
 }
 
 func (s *MyNewIntegrationSuite) TestWalletCreate() {
