@@ -58,7 +58,7 @@ func (h *Handler) SendMoney(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, handlers.StatusResponse{
-		"ok",
+		Status: "ok",
 	})
 }
 
