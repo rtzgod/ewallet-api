@@ -1,4 +1,4 @@
-package unit
+package http
 
 import (
 	"bytes"
@@ -7,8 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/domain/service"
-	handlers_http "github.com/rtzgod/EWallet/internal/handlers/http"
-	mock_service "github.com/rtzgod/EWallet/tests/unit/mocks"
+	mock_service "github.com/rtzgod/EWallet/internal/domain/service/mocks"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -16,13 +15,13 @@ import (
 )
 
 func TestHandler_sendMoney(t *testing.T) {
-	type MockBehavior func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm)
+	type MockBehavior func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm)
 
 	testTable := []struct {
 		name                string
 		walletId            string
 		inputBody           string
-		inputReceiver       handlers_http.ReceiverWalletForm
+		inputReceiver       ReceiverWalletForm
 		mockBehavior        MockBehavior
 		expectedStatusCode  int
 		expectedRequestBody string
@@ -31,11 +30,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "OK",
 			walletId:  "1",
 			inputBody: `{"to": "2", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "2",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 				mockWalletService.EXPECT().GetById(walletId).Return(entity.Wallet{Id: "1", Balance: 100}, nil)
 				mockWalletService.EXPECT().GetById(receiver.ReceiverId).Return(entity.Wallet{Id: "2", Balance: 100}, nil)
 				mockWalletService.EXPECT().Update(walletId, receiver.ReceiverId, receiver.Amount).Return(nil)
@@ -48,11 +47,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "non-existent sender wallet",
 			walletId:  "this wallet doesn't exist",
 			inputBody: `{"to": "2", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "2",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 				mockWalletService.EXPECT().GetById(walletId).Return(entity.Wallet{}, errors.New("wallet not found"))
 			},
 			expectedStatusCode:  http.StatusNotFound,
@@ -62,11 +61,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "non-existent receiver wallet",
 			walletId:  "1",
 			inputBody: `{"to": "this wallet doesn't exist", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "this wallet doesn't exist",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 				mockWalletService.EXPECT().GetById(walletId).Return(entity.Wallet{Id: "1", Balance: 100}, nil)
 				mockWalletService.EXPECT().GetById(receiver.ReceiverId).Return(entity.Wallet{}, errors.New("wallet not found"))
 			},
@@ -77,11 +76,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "incorrect json body",
 			walletId:  "1",
 			inputBody: `{"wrong json key": "2", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "2",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 			},
 			expectedStatusCode:  http.StatusBadRequest,
 			expectedRequestBody: `{"message":"json body incorrect"}`,
@@ -90,11 +89,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "same sender and receiver wallet ID's",
 			walletId:  "1",
 			inputBody: `{"to": "1", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "1",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 			},
 			expectedStatusCode:  http.StatusBadRequest,
 			expectedRequestBody: `{"message":"self transaction"}`,
@@ -103,11 +102,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "amount of sending money less than 10",
 			walletId:  "1",
 			inputBody: `{"to": "2", "amount": -100}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "1",
 				Amount:     -100,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 			},
 			expectedStatusCode:  http.StatusBadRequest,
 			expectedRequestBody: `{"message":"minimal amount is 10"}`,
@@ -116,11 +115,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "not enough money on sender balance",
 			walletId:  "1",
 			inputBody: `{"to": "2", "amount": 110}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "1",
 				Amount:     110,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 				mockWalletService.EXPECT().GetById(walletId).Return(entity.Wallet{Id: "1", Balance: 0}, nil)
 			},
 			expectedStatusCode:  http.StatusBadRequest,
@@ -130,11 +129,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "Internal DB Error while updating wallets info",
 			walletId:  "1",
 			inputBody: `{"to": "2", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "2",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 				mockWalletService.EXPECT().GetById(walletId).Return(entity.Wallet{Id: "1", Balance: 100}, nil)
 				mockWalletService.EXPECT().GetById(receiver.ReceiverId).Return(entity.Wallet{Id: "2", Balance: 100}, nil)
 				mockWalletService.EXPECT().Update(walletId, receiver.ReceiverId, receiver.Amount).Return(errors.New("some db error while updating wallets"))
@@ -146,11 +145,11 @@ func TestHandler_sendMoney(t *testing.T) {
 			name:      "Internal DB Error while adding transaction info to transactions table",
 			walletId:  "1",
 			inputBody: `{"to": "2", "amount": 10}`,
-			inputReceiver: handlers_http.ReceiverWalletForm{
+			inputReceiver: ReceiverWalletForm{
 				ReceiverId: "2",
 				Amount:     10,
 			},
-			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver handlers_http.ReceiverWalletForm) {
+			mockBehavior: func(mockTransactionService *mock_service.MockTransaction, mockWalletService *mock_service.MockWallet, walletId string, receiver ReceiverWalletForm) {
 				mockWalletService.EXPECT().GetById(walletId).Return(entity.Wallet{Id: "1", Balance: 100}, nil)
 				mockWalletService.EXPECT().GetById(receiver.ReceiverId).Return(entity.Wallet{Id: "2", Balance: 100}, nil)
 				mockWalletService.EXPECT().Update(walletId, receiver.ReceiverId, receiver.Amount).Return(nil)
@@ -167,7 +166,7 @@ func TestHandler_sendMoney(t *testing.T) {
 	mockTransactionService := mock_service.NewMockTransaction(ctrl)
 	mockWalletService := mock_service.NewMockWallet(ctrl)
 	services := &service.Service{Wallet: mockWalletService, Transaction: mockTransactionService}
-	handler := handlers_http.NewHandler(services)
+	handler := NewHandler(services)
 
 	r := gin.Default()
 	r.POST("/api/v1/wallet/:walletId/send", handler.SendMoney)
@@ -234,7 +233,7 @@ func TestHandler_getHistory(t *testing.T) {
 	mockWalletService := mock_service.NewMockWallet(ctrl)
 
 	services := &service.Service{Wallet: mockWalletService, Transaction: mockTransactionService}
-	handler := handlers_http.NewHandler(services)
+	handler := NewHandler(services)
 
 	r := gin.Default()
 	r.GET("/api/v1/wallet/:walletId/history", handler.GetHistory)

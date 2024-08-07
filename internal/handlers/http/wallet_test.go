@@ -1,4 +1,4 @@
-package unit
+package http
 
 import (
 	"errors"
@@ -6,8 +6,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/domain/service"
-	handlers_http "github.com/rtzgod/EWallet/internal/handlers/http"
-	"github.com/rtzgod/EWallet/tests/unit/mocks"
+	mock_service "github.com/rtzgod/EWallet/internal/domain/service/mocks"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -47,7 +46,7 @@ func TestHandler_createWallet(t *testing.T) {
 	mockWalletService := mock_service.NewMockWallet(ctrl)
 
 	services := &service.Service{Wallet: mockWalletService}
-	handler := handlers_http.NewHandler(services)
+	handler := NewHandler(services)
 
 	r := gin.Default()
 	r.POST("/api/v1/wallet/", handler.CreateWallet)
@@ -102,7 +101,7 @@ func TestHandler_getWalletById(t *testing.T) {
 
 	mockWalletService := mock_service.NewMockWallet(ctrl)
 	services := &service.Service{Wallet: mockWalletService}
-	handler := handlers_http.NewHandler(services)
+	handler := NewHandler(services)
 
 	r := gin.Default()
 	r.GET("/api/v1/wallet/:walletId", handler.GetWalletById)
