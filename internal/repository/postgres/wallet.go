@@ -52,13 +52,13 @@ func (r *WalletPostgres) Update(senderId, receiverId string, amount float64) err
 	updateSenderBalanceQuery := fmt.Sprintf("update %s set balance = balance - $1 where id = $2", walletsTable)
 	_, err = r.db.Exec(updateSenderBalanceQuery, amount, senderId)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 	updateReceiverBalanceQuery := fmt.Sprintf("update %s set balance = balance + $1 where id = $2", walletsTable)
 	_, err = r.db.Exec(updateReceiverBalanceQuery, amount, receiverId)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 	return tx.Commit()
