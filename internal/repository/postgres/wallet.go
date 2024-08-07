@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 )
 
@@ -50,16 +51,22 @@ func (r *WalletPostgres) Update(senderId, receiverId string, amount float64) err
 		return err
 	}
 	updateSenderBalanceQuery := fmt.Sprintf("update %s set balance = balance - $1 where id = $2", walletsTable)
-	_, err = r.db.Exec(updateSenderBalanceQuery, amount, senderId)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
+	res, err := tx.Exec(updateSenderBalanceQuery, amount, senderId)
+	rowsAffected, _ := res.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return errors.Errorf("err: %v, rowsAffected: %d", err, rowsAffected)
 	}
 	updateReceiverBalanceQuery := fmt.Sprintf("update %s set balance = balance + $1 where id = $2", walletsTable)
-	_, err = r.db.Exec(updateReceiverBalanceQuery, amount, receiverId)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
+	res, err = tx.Exec(updateReceiverBalanceQuery, amount, receiverId)
+	rowsAffected, _ = res.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return errors.Errorf("err: %v, rowsAffected: %d", err, rowsAffected)
 	}
 	return tx.Commit()
 }
