@@ -2,61 +2,49 @@ package integration
 
 import (
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/rtzgod/EWallet/internal/domain/entity"
 	"github.com/rtzgod/EWallet/internal/repository"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"log"
+	"os"
 	"testing"
 	"time"
 )
 
-var DB *sqlx.DB
+var dbpool *sqlx.DB
 
 type MyNewIntegrationSuite struct {
 	suite.Suite
-	db    *sqlx.DB
 	repos *repository.Repository
 }
 
 func TestMain(m *testing.M) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		logrus.Fatalf("Could not construct pool: %s", err)
-	}
-	err = pool.Client.Ping()
-	if err != nil {
-		log.Fatalf("[1] Could not connect to docker: %s", err)
-	}
-	resource, err := pool.BuildAndRun("integration_tests_db", "fixtures/Dockerfile", []string{})
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
+	pool := initDockerPool()
+	postgresContainer := initPostgresContainer(pool)
 
-	hostAndPort := resource.GetHostPort("5432/tcp")
+	hostAndPort := postgresContainer.GetHostPort("5432/tcp")
 	databaseUrl := fmt.Sprintf("postgres://testuser:123@%s/testdb?sslmode=disable", hostAndPort)
 
-	if err = pool.Retry(func() error {
-		var err error
-		DB, err = sqlx.Open("postgres", databaseUrl)
-		if err != nil {
-			return err
-		}
-		return DB.Ping()
-	}); err != nil {
-		log.Fatalf("[2] Could not connect to docker: %s", err)
+	if err := pool.Retry(waitForPostgres(databaseUrl)); err != nil {
+		logrus.Fatalf("postgres container not initialized: %s", err)
 	}
 
-	defer func() {
-		if err := pool.Purge(resource); err != nil {
-			log.Fatalf("Could not purge resource: %s", err)
-		}
-	}()
+	startMigration(databaseUrl)
 
-	m.Run()
+	code := m.Run()
+
+	if err := pool.Purge(postgresContainer); err != nil {
+		log.Fatalf("Could not purge resource: %s", err)
+	}
+
+	os.Exit(code)
 }
 
 func TestMyNewIntegrationSuite(t *testing.T) {
@@ -64,21 +52,20 @@ func TestMyNewIntegrationSuite(t *testing.T) {
 }
 
 func (s *MyNewIntegrationSuite) SetupSuite() {
-	s.db = DB
 }
 
 func (s *MyNewIntegrationSuite) TearDownSuite() {
-	if err := s.db.Close(); err != nil {
+	if err := dbpool.Close(); err != nil {
 		logrus.Fatal(err)
 	}
 }
 
 func (s *MyNewIntegrationSuite) SetupTest() {
-	s.repos = repository.NewRepository(s.db)
+	s.repos = repository.NewRepository(dbpool)
 }
 
 func (s *MyNewIntegrationSuite) TearDownTest() {
-	_, _ = s.db.Exec("TRUNCATE TABLE wallets, transactions")
+	_, _ = dbpool.Exec("TRUNCATE TABLE wallets, transactions")
 }
 
 func (s *MyNewIntegrationSuite) Test_WalletCreate() {
@@ -171,7 +158,7 @@ func (s *MyNewIntegrationSuite) dbCreateWallet(walletId string) entity.Wallet {
 	var wallet entity.Wallet
 	query := fmt.Sprintf("insert into %s (id, balance) values ($1, $2)", "wallets")
 
-	if _, err := s.db.Exec(query, walletId, 100.0); err != nil {
+	if _, err := dbpool.Exec(query, walletId, 100.0); err != nil {
 		s.Fail(err.Error())
 	}
 
@@ -185,7 +172,7 @@ func (s *MyNewIntegrationSuite) dbCreateWallet(walletId string) entity.Wallet {
 func (s *MyNewIntegrationSuite) dbGetWallet(walletId string) entity.Wallet {
 	var wallet entity.Wallet
 	query := fmt.Sprintf("select * from %s where id=$1", "wallets")
-	err := s.db.Get(&wallet, query, walletId)
+	err := dbpool.Get(&wallet, query, walletId)
 	if err != nil {
 		s.Fail(err.Error())
 	}
@@ -194,7 +181,7 @@ func (s *MyNewIntegrationSuite) dbGetWallet(walletId string) entity.Wallet {
 
 func (s *MyNewIntegrationSuite) dbCreateTransaction(senderId, receiverId string, amount float64) {
 	query := fmt.Sprintf("insert into %s (time, sender_id, receiver_id, amount) values ($1, $2, $3, $4)", "transactions")
-	_, err := s.db.Exec(query, time.Now().Format(time.RFC3339), senderId, receiverId, amount)
+	_, err := dbpool.Exec(query, time.Now().Format(time.RFC3339), senderId, receiverId, amount)
 	if err != nil {
 		s.Fail(err.Error())
 	}
@@ -203,9 +190,76 @@ func (s *MyNewIntegrationSuite) dbCreateTransaction(senderId, receiverId string,
 func (s *MyNewIntegrationSuite) dbGetTransaction(senderId string) entity.Transaction {
 	var transaction entity.Transaction
 	query := fmt.Sprintf("select * from %s where sender_id=$1", "transactions")
-	err := s.db.Get(&transaction, query, senderId)
+	err := dbpool.Get(&transaction, query, senderId)
 	if err != nil {
 		s.Fail(err.Error())
 	}
 	return transaction
+}
+
+// functions for dockertest
+
+func initDockerPool() *dockertest.Pool {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		logrus.Fatalf("Could not construct pool: %s", err)
+	}
+	err = pool.Client.Ping()
+	if err != nil {
+		log.Fatalf("[1] Could not connect to docker: %s", err)
+	}
+
+	pool.MaxWait = 120 * time.Second
+
+	return pool
+}
+
+func initPostgresContainer(pool *dockertest.Pool) *dockertest.Resource {
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "postgres",
+		Tag:        "latest",
+		Env: []string{
+			"POSTGRES_USER=testuser",
+			"POSTGRES_PASSWORD=123",
+			"POSTGRES_DB=testdb",
+		},
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
+	if err != nil {
+		logrus.Fatalf("Could not start postgres container: %s", err)
+	}
+	_ = container.Expire(120)
+	return container
+}
+
+func waitForPostgres(databaseUrl string) func() error {
+	return func() error {
+		var err error
+		dbpool, err = sqlx.Open("postgres", databaseUrl)
+		if err != nil {
+			return err
+		}
+		return dbpool.Ping()
+	}
+}
+
+func startMigration(databaseUrl string) {
+	db, err := sqlx.Open("postgres", databaseUrl)
+	if err != nil {
+		logrus.Fatalf("Error open connection to start migrations: %s", err)
+	}
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
+	if err != nil {
+		logrus.Fatalf("couldn't init driver: %s", err)
+	}
+
+	migration, err := migrate.NewWithDatabaseInstance("file://../../db/migrations", "postgres", driver)
+	if err != nil {
+		logrus.Fatalf("couldn't init migrate: %s", err)
+	}
+	if err := migration.Up(); err != nil {
+		logrus.Fatalf("couldn't up migrations: %s", err)
+	}
 }
