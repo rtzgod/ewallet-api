@@ -38,13 +38,13 @@ func NewPostgres(cfg Config) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to ping postgres")
 	}
-	if err := ApplyMigration(db.DB); err != nil {
+	if err := startMigration(db.DB); err != nil {
 		return nil, err
 	}
 	return db, nil
 }
 
-func ApplyMigration(db *sql.DB) error {
+func startMigration(db *sql.DB) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return errors.Wrap(err, "failed to create database driver")
