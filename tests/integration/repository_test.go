@@ -254,8 +254,6 @@ func startMigration(databaseUrl string) {
 	if err != nil {
 		logrus.Fatalf("couldn't init driver: %s", err)
 	}
-	cwd, _ := os.Getwd()
-	fmt.Println(cwd)
 
 	migration, err := migrate.NewWithDatabaseInstance("file://../../db/migrations", "postgres", driver)
 	if err != nil {
