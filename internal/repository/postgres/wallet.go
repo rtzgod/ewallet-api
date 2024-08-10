@@ -50,7 +50,7 @@ func (r *WalletPostgres) Update(senderId, receiverId string, amount float64) err
 	if err != nil {
 		return err
 	}
-	updateSenderBalanceQuery := fmt.Sprintf("update %s set balance = balance - $1 where id = $2", walletsTable)
+	updateSenderBalanceQuery := fmt.Sprintf("update %s set balance = balance - $1 where id = $2 and balance - $1 > -1", walletsTable)
 	res, err := tx.Exec(updateSenderBalanceQuery, amount, senderId)
 	rowsAffected, _ := res.RowsAffected()
 	if err != nil || rowsAffected == 0 {

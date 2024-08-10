@@ -121,6 +121,18 @@ func (s *MyNewIntegrationSuite) Test_WalletUpdateNoSender() {
 	dbSecondWallet = s.dbGetWallet(secondWalletId)
 	s.Require().Equal(100.0, dbSecondWallet.Balance)
 }
+func (s *MyNewIntegrationSuite) Test_WalletUpdateBalanceNotEnough() {
+	firstWalletId := "1"
+	secondWalletId := "2"
+	dbFirstWallet := s.dbCreateWallet(firstWalletId)
+	dbSecondWallet := s.dbCreateWallet(secondWalletId)
+	err := s.repos.Wallet.Update(dbFirstWallet.Id, dbSecondWallet.Id, 101)
+	s.Require().Error(err)
+	dbFirstWallet = s.dbGetWallet(firstWalletId)
+	dbSecondWallet = s.dbGetWallet(secondWalletId)
+	s.Require().Equal(100.0, dbFirstWallet.Balance)
+	s.Require().Equal(100.0, dbSecondWallet.Balance)
+}
 
 func (s *MyNewIntegrationSuite) Test_TransactionCreate() {
 	senderWalletId := "1"
