@@ -121,7 +121,7 @@ func (s *MyNewIntegrationSuite) Test_WalletUpdateNoSender() {
 	dbSecondWallet = s.dbGetWallet(secondWalletId)
 	s.Require().Equal(100.0, dbSecondWallet.Balance)
 }
-func (s *MyNewIntegrationSuite) Test_WalletUpdateBalanceNotEnough() {
+func (s *MyNewIntegrationSuite) Test_WalletUpdateBalanceIsNotEnough() {
 	firstWalletId := "1"
 	secondWalletId := "2"
 	dbFirstWallet := s.dbCreateWallet(firstWalletId)
