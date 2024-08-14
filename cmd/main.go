@@ -1,8 +1,8 @@
 package main
 
 import (
-	_ "github.com/rtzgod/EWallet/docs"
-	"github.com/rtzgod/EWallet/internal/app"
+	_ "github.com/rtzgod/ewallet-api/docs"
+	"github.com/rtzgod/ewallet-api/internal/app"
 )
 
 //	@title			Ewallet App API

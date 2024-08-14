@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/rtzgod/EWallet/internal/domain/entity"
+	"github.com/rtzgod/ewallet-api/internal/domain/entity"
 	"time"
 )
 

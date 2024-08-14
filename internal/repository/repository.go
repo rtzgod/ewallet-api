@@ -2,8 +2,8 @@ package repository
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/rtzgod/EWallet/internal/domain/entity"
-	"github.com/rtzgod/EWallet/internal/repository/postgres"
+	"github.com/rtzgod/ewallet-api/internal/domain/entity"
+	"github.com/rtzgod/ewallet-api/internal/repository/postgres"
 )
 
 type Wallet interface {

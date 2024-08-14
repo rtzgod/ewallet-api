@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/rtzgod/EWallet/internal/domain/entity"
-	"github.com/rtzgod/EWallet/internal/repository"
+	"github.com/rtzgod/ewallet-api/internal/domain/entity"
+	"github.com/rtzgod/ewallet-api/internal/repository"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go

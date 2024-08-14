@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	entity "github.com/rtzgod/EWallet/internal/domain/entity"
+	entity "github.com/rtzgod/ewallet-api/internal/domain/entity"
 )
 
 // MockWallet is a mock of Wallet interface.
