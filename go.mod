@@ -1,4 +1,4 @@
-module github.com/rtzgod/EWallet
+module github.com/rtzgod/ewallet-api
 
 go 1.22
 

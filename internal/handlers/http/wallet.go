@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rtzgod/EWallet/internal/handlers"
+	"github.com/rtzgod/ewallet-api/internal/handlers"
 	"net/http"
 )
 

@@ -2,12 +2,12 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rtzgod/EWallet/internal/domain/service"
+	"github.com/rtzgod/ewallet-api/internal/domain/service"
 
 	"github.com/swaggo/files"       // swagger embed files
 	"github.com/swaggo/gin-swagger" // gin-swagger middleware
 
-	_ "github.com/rtzgod/EWallet/docs"
+	_ "github.com/rtzgod/ewallet-api/docs"
 )
 
 type Handler struct {
